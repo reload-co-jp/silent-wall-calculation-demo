@@ -1,94 +1,121 @@
-# Next.js Static Site Template
+# 壁面 計測デモアプリ
 
-Next.js 16 + React 19 + TypeScript を使用した静的サイト生成のテンプレートリポジトリです。GitHub Pages へのデプロイが自動化されています。
+## 1. 概要
 
-## 技術スタック
+写真1枚から壁の実寸（幅・高さ・面積）を算出し、遮音材の必要枚数を自動計算するデモアプリ。
+本アプリは平面前提の簡易測量ツールとする。
 
-- **Next.js** 16 - App Router / Static Export
-- **React** 19
-- **TypeScript** 5
-- **ESLint** 9 - Flat Config
-- **Prettier** 3
+---
 
-## このテンプレートの使い方
+## 2. 想定ユースケース
 
-1. **「Use this template」ボタン**をクリックして新しいリポジトリを作成
-2. リポジトリをクローン
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-   cd YOUR_REPO
-   ```
-3. 依存関係をインストール
-   ```bash
-   pnpm install
-   ```
-4. 開発サーバーを起動
-   ```bash
-   pnpm dev
-   ```
+- 簡易見積もりデモ
+- 遮音材販売時の必要数量シミュレーション
+- 写真ベース測量SaaSのプロトタイプ
 
-## セットアップ後にやること
+---
 
-### 1. `next.config.js` の修正
+## 3. 前提条件
 
-`basePath` をリポジトリ名に変更してください：
+- 壁は平面であること
+- 画像内に既知サイズ物体（例：A4用紙 210mm × 297mm）を含めること
+- 斜め撮影可（透視変換で補正）
 
-```js
-basePath: process.env.NODE_ENV === "production" ? "/YOUR_REPO_NAME" : "",
-```
+---
 
-### 2. `app/layout.tsx` の修正
+## 4. 機能要件
 
-メタデータとサイト情報を更新してください：
+### 4.1 画像アップロード
 
-```tsx
-export const metadata: Metadata = {
-  title: "Your Site Title",
-  description: "Your site description",
-}
-```
+- JPG / PNG 対応
+- ブラウザ内処理（サーバー送信なし）
 
-### 3. GitHub Pages の設定
+### 4.2 スケール設定
 
-1. リポジトリの **Settings** → **Pages** へ移動
-2. **Source** を「GitHub Actions」に設定
+- A4用紙の4点をユーザーがクリック
+- ピクセル距離からスケール係数算出
 
-## ディレクトリ構成
+スケール計算式：
 
-```
-.
-├── app/
-│   ├── layout.tsx      # ルートレイアウト
-│   ├── page.tsx        # ホームページ
-│   └── reset.css       # CSSリセット
-├── .github/
-│   └── workflows/
-│       ├── lint.yml    # リント自動実行
-│       └── deploy.yml  # GitHub Pages 自動デプロイ
-├── next.config.js      # Next.js 設定
-├── tsconfig.json       # TypeScript 設定
-├── eslint.config.mjs   # ESLint 設定
-└── .prettierrc.json    # Prettier 設定
-```
+    scale(mm_per_pixel) = 実寸(mm) / ピクセル距離
 
-## スクリプト
+### 4.3 壁領域指定
 
-| コマンド | 説明 |
-|---------|------|
-| `pnpm dev` | 開発サーバーを起動 |
-| `pnpm build` | 静的サイトをビルド（`/out` に出力） |
-| `pnpm lint` | ESLint を実行 |
-| `pnpm format` | Prettier でコードをフォーマット |
-| `pnpm typecheck` | TypeScript の型チェック |
+- 壁の四隅をクリック
+- 台形状態でも可
 
-## 機能
+### 4.4 透視変換
 
-- **静的サイト生成** - `next build` で `/out` に HTML を出力
-- **自動デプロイ** - main ブランチへの push で GitHub Pages に自動デプロイ
-- **自動リント** - push 時に ESLint / Prettier チェックを実行
-- **依存関係の自動更新** - Dependabot による週次チェック
-- **エディタ設定** - VS Code での自動フォーマット設定済み
+- OpenCV.js の getPerspectiveTransform()
+- warpPerspective()
 
-## ライセンス
+### 4.5 寸法算出
 
-ISC
+    幅(mm) = ピクセル幅 × scale
+    高さ(mm) = ピクセル高さ × scale
+    面積(㎡) = 幅 × 高さ / 1,000,000
+
+### 4.6 遮音材枚数計算
+
+例：910mm × 1820mm の場合
+
+    材料面積 = 0.91 × 1.82
+    必要枚数 = ceil(壁面積 / 材料面積 × 1.05)
+
+※5%余裕を自動加算
+
+---
+
+## 5. 非機能要件
+
+- ブラウザ完結
+- モバイル対応
+- リアルタイム計算表示
+- 点のドラッグ再調整可能
+
+---
+
+## 6. 技術スタック
+
+- Next.js
+- TypeScript
+- Canvas API
+- OpenCV.js
+
+---
+
+## 7. 画面構成
+
+1.  画像アップロード画面
+2.  A4指定モード
+3.  壁指定モード
+4.  計測結果表示エリア
+
+表示項目： - 幅 - 高さ - 面積（㎡） - 材料必要枚数
+
+---
+
+## 8. 将来拡張案
+
+- 自動エッジ検出
+- AI壁面認識
+- 複数面対応
+- 見積PDF出力
+- クラウド保存機能
+
+---
+
+## 9. やらないこと（デモ段階）
+
+- 点群データ処理
+- 3Dモデリング
+- BIM連携
+- LiDAR統合
+
+---
+
+## 10. 成功基準
+
+- ±1〜2cm程度の精度
+- 直感的操作
+- 3分以内で計測完了可能
