@@ -65,6 +65,22 @@ const Page: FC = () => {
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto" }}>
+      {/* 使い方 */}
+      <ol
+        style={{
+          color: "#888",
+          fontSize: "0.8rem",
+          lineHeight: 1.8,
+          marginBottom: 20,
+          paddingLeft: 20,
+        }}
+      >
+        <li>壁とA4用紙が写った写真をアップロード</li>
+        <li>A4用紙の四隅を左上から時計回りに4点クリック（スケール基準）</li>
+        <li>壁の四隅を左上から時計回りに4点クリック</li>
+        <li>壁寸法・面積・遮音材の必要枚数を確認</li>
+      </ol>
+
       {/* Step indicator */}
       <div
         style={{
