@@ -2,8 +2,8 @@ import { Title } from "components/elements/layout"
 import "./reset.css"
 
 export const metadata = {
-  title: "Page title",
-  description: "Page description",
+  title: "壁面計測デモ",
+  description: "写真1枚から壁の実寸と遮音材必要枚数を算出するデモアプリ",
 }
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
@@ -18,7 +18,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
             position: "relative",
           }}
         >
-          <Title>Page title</Title>
+          <Title style={{ color: "white" }}>壁面計測デモ</Title>
         </header>
         <main
           style={{
@@ -37,7 +37,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
             padding: "1rem",
           }}
         >
-          <p>&copy; My organization</p>
+          <p>&copy; Reload, Inc.</p>
         </footer>
       </body>
     </html>
