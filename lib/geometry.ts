@@ -1,4 +1,4 @@
-import { Point, MeasurementResult } from "lib/types"
+import { Point, MeasurementResult, PanelList } from "lib/types"
 
 const dist = (a: Point, b: Point): number => {
   return Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
@@ -12,6 +12,19 @@ const avgEdges = (
   const pixelHeight = (dist(pts[0], pts[3]) + dist(pts[1], pts[2])) / 2
   return { pixelWidth, pixelHeight }
 }
+
+// 利用可能なパネルサイズ一覧（面積降順でソート済み）
+const AVAILABLE_PANELS = [
+  { name: "910×455mm", widthMm: 910, heightMm: 455 },
+  { name: "910×300mm", widthMm: 910, heightMm: 300 },
+  { name: "455×455mm", widthMm: 455, heightMm: 455 },
+  { name: "910×200mm", widthMm: 910, heightMm: 200 },
+  { name: "455×300mm", widthMm: 455, heightMm: 300 },
+  { name: "455×200mm", widthMm: 455, heightMm: 200 },
+  { name: "300×300mm", widthMm: 300, heightMm: 300 },
+  { name: "300×200mm", widthMm: 300, heightMm: 200 },
+  { name: "200×200mm", widthMm: 200, heightMm: 200 },
+].sort((a, b) => b.widthMm * b.heightMm - a.widthMm * a.heightMm)
 
 // A4 の4点から mm/pixel スケール係数を算出
 // A4 のサイズ: 210mm × 297mm（縦横は自動判定）
@@ -27,7 +40,8 @@ export const calcScale = (a4Points: Point[]): number => {
   return (scaleW + scaleH) / 2
 }
 
-// 壁の4点と scale から寸法・面積・必要枚数を算出
+// 壁の4点と scale から寸法・面積・パネル組み合わせを算出
+// グリーディ法: 面積の大きいパネルから順に割り当て、余りを小さいパネルで埋める
 export const calcDimensions = (
   wallPoints: Point[],
   scale: number
@@ -38,9 +52,31 @@ export const calcDimensions = (
   const heightMm = Math.round(pixelHeight * scale)
   const areaSqM = (widthMm * heightMm) / 1_000_000
 
-  // 遮音材 1枚: 910mm × 455mm = 0.91 × 1.82 ㎡、5%余裕
-  const panelAreaSqM = 0.91 * 0.455
-  const panelCount = Math.ceil((areaSqM / panelAreaSqM) * 1.05)
+  // 5% 余裕を含めた必要面積（mm²）
+  let remainingMm2 = Math.ceil(widthMm * heightMm * 1.05)
 
-  return { widthMm, heightMm, areaSqM, panelCount }
+  const panelList: PanelList = []
+
+  for (const panel of AVAILABLE_PANELS) {
+    const panelAreaMm2 = panel.widthMm * panel.heightMm
+    const count = Math.floor(remainingMm2 / panelAreaMm2)
+    if (count > 0) {
+      panelList.push({ ...panel, count })
+      remainingMm2 -= count * panelAreaMm2
+    }
+    if (remainingMm2 <= 0) break
+  }
+
+  // 最小パネルでも割り切れない余りがある場合は1枚追加
+  if (remainingMm2 > 0) {
+    const smallest = AVAILABLE_PANELS[AVAILABLE_PANELS.length - 1]
+    const existing = panelList.find((p) => p.name === smallest.name)
+    if (existing) {
+      existing.count += 1
+    } else {
+      panelList.push({ ...smallest, count: 1 })
+    }
+  }
+
+  return { widthMm, heightMm, areaSqM, panelList }
 }
